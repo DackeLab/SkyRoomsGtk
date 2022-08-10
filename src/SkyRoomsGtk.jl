@@ -8,7 +8,7 @@ export main
 const nsuns = 4
 const ledsperstrip = 150
 const zenith = 71
-const cardinalities = ["NW", "NE", "SE", "SW"]
+const cardinalities = ["NE", "SW", "SE", "NW"]
 const baudrate = 115200
 
 good_port(port) = try
