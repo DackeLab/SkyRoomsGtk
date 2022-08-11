@@ -3,12 +3,11 @@ module SkyRoomsGtk
 using TOML
 using Gtk.ShortNames, GtkObservables, LibSerialPort
 
-export main
+export nicolas, sheldon
 
 const nsuns = 4
 const ledsperstrip = 150
 const zenith = 71
-const cardinalities = ["NE", "SW", "SE", "NW"]
 const baudrate = 115200
 
 good_port(port) = try
@@ -29,13 +28,13 @@ function get_port()
 end
 
 
-function send(cardinality, elevation, radius, red::UInt8, green::UInt8, blue::UInt8, sunid, sp)
-    start, len = start_length(cardinality, elevation, radius)
+function send(cardinality, elevation, radius, red::UInt8, green::UInt8, blue::UInt8, sunid, sp, cardinalities)
+    start, len = start_length(cardinality, elevation, radius, cardinalities)
     bytes = reinterpret(UInt8, UInt16[start])
     write(sp, UInt8(sunid - 1), bytes..., UInt8(len), red, green, blue)
 end
 
-function start_length(cardinality, elevation, radius)
+function start_length(cardinality, elevation, radius, cardinalities)
     i = findfirst(==(cardinality), cardinalities)
     issecondstrip = i > 2
     issecondhalf = iseven(i)
@@ -45,7 +44,7 @@ function start_length(cardinality, elevation, radius)
     return start, stop - start
 end
 
-function sunwidget(id, sp)
+function sunwidget(id, sp, cardinalities)
     title = label(string(id))
     cardinality = dropdown(cardinalities; value=cardinalities[1])
     elevation = slider(1:zenith; value=zenith)
@@ -54,24 +53,24 @@ function sunwidget(id, sp)
     green = slider(0x00:0xff; value=0x00)
     blue = slider(0x00:0xff; value=0x00)
     onany(cardinality, elevation, radius, red, green, blue) do x...
-        send(x..., id, sp)
+        send(x..., id, sp, cardinalities)
     end
     return title, cardinality, elevation, radius, red, green, blue
 end
 
 
-function get_window(sp, ::Missing)
+function get_window(sp, ::Missing, cardinalities)
     win = Window("SkyRoom") |> (g = Grid())
     for (i, txt) in enumerate(("Sun", "Cardinality", "Elevation", "radius", "Red", "Green", "Blue"))
         g[1, i] = label(txt)
     end
-    for i in 1:nsuns, (j, w) in enumerate(sunwidget(i, sp))
+    for i in 1:nsuns, (j, w) in enumerate(sunwidget(i, sp, cardinalities))
         g[i + 1, j] = w
     end
     return win
 end
 
-function upload_setups(file)
+function upload_setups(file, cardinalities)
     @assert isfile(file) "file $file does not exist"
 
     d = TOML.tryparsefile(file)
@@ -109,21 +108,21 @@ function upload_setups(file)
     return d["setups"]
 end
 
-turnoff(sp) = foreach(1:nsuns) do i
-    send(cardinalities[1], 1, 0, zeros(UInt8, 3)..., i, sp)
+turnoff(sp, cardinalities) = foreach(1:nsuns) do i
+    send("NW", 1, 0, zeros(UInt8, 3)..., i, sp, cardinalities)
 end
 
-function get_window(sp, file::String)
+function get_window(sp, file::String, cardinalities)
     win = Window("SkyRoom") |> (g = Grid())
-    setups = upload_setups(file)
+    setups = upload_setups(file, cardinalities)
     n = length(setups)
     wh = ceil(Int, sqrt(n))
     for (i, setup) in enumerate(setups)
         b = button(setup["label"])
         on(b) do _
-            turnoff(sp)
+            turnoff(sp, cardinalities)
             for (sunid, sun) in enumerate(setup["suns"])
-                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, sp)
+                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, sp, cardinalities)
             end
         end
         x, y = Tuple(CartesianIndices((wh, wh))[i])
@@ -132,10 +131,10 @@ function get_window(sp, file::String)
     return win
 end
 
-function main(; file::Union{Missing, String} = missing)
+function main(cardinalities; file::Union{Missing, String} = missing)
     port = get_port()
     sp = open(port, baudrate)
-    win = get_window(sp, file)
+    win = get_window(sp, file, cardinalities)
     Gtk.showall(win)
     c = Condition()
     signal_connect(win, :destroy) do widget
@@ -145,5 +144,8 @@ function main(; file::Union{Missing, String} = missing)
     @async Gtk.gtk_main()
     wait(c)
 end
+
+sheldon(; file = missing) = main(["NE", "SW", "SE", "NW"]; file)
+nicolas(; file = missing) = main(["SE", "NW", "NE", "SW"]; file)
 
 end
