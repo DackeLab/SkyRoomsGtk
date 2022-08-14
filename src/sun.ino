@@ -3,7 +3,7 @@
 #define NUM_LEDS 300
 #define DATA_PIN 4
 #define CLOCK_PIN 5
-#define NUM_SUNS 4
+#define NUM_SUNS 10
 
 CRGB leds[NUM_LEDS];
 
