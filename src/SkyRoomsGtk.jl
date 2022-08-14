@@ -27,7 +27,7 @@ function start_length(cardinality, elevation, radius, cardinalities)
     return start, stop - start
 end
 
-function sunwidget(id, sp, cardinalities)
+function sunwidget(id, sp, cardinalities, off)
     title = label(string(id))
     cardinality = dropdown(cardinalities; value=cardinalities[1])
     elevation = slider(1:zenith; value=zenith)
@@ -38,10 +38,17 @@ function sunwidget(id, sp, cardinalities)
     onany(cardinality, elevation, radius, red, green, blue) do x...
         send(x..., id, sp, cardinalities)
     end
+    on(off) do _
+        red[] = 0x00
+        sleep(0.1)
+        green[] = 0x00
+        sleep(0.1)
+        blue[] = 0x00
+    end
     return title, cardinality, elevation, radius, red, green, blue
 end
 
-function windwidget(fan)
+function windwidget(fan, off)
     fansid = label(string(fan.id))
     duty = slider(0:254; value=0)
     rpm = label("0")
@@ -49,6 +56,9 @@ function windwidget(fan)
         write(fan.sp, UInt8(duty))
         speed = duty < 15 ? 0 : round(Int, 11500duty/254)
         rpm[] = digitsep(speed)
+    end
+    on(off) do _
+        duty[] = 0
     end
     return fansid, duty, rpm
 end
@@ -78,10 +88,12 @@ end
 
 function get_arduinos()
     arduinos = identify_arduino.(get_port_list())
+    filter!(!isnothing, arduinos)
     ledsi = findfirst(x -> x.type == :leds, arduinos)
     fansi = findall(x -> x.type == :fans, arduinos)
     leds = arduinos[ledsi]
     fans = arduinos[fansi]
+    sort!(fans; by=fan -> getfield(fan, :id))
     return leds, fans
 end
 
@@ -92,35 +104,25 @@ end
 function build_leds_gui(leds, cardinalities, nsuns)
     win = Window("LEDs") |> (g = Grid())
     off = button("OFF")
-    on(off) do _
-        turnoff(leds.sp, cardinalities)
-    end
     g[1,1:7] = off
     for (i, txt) in enumerate(("Sun", "Cardinality", "Elevation", "radius", "Red", "Green", "Blue"))
         g[2, i] = label(txt)
     end
-    for i in 1:nsuns, (j, w) in enumerate(sunwidget(i, leds.sp, cardinalities))
+    for i in 1:nsuns, (j, w) in enumerate(sunwidget(i, leds.sp, cardinalities, off))
         g[i + 2, j] = w
     end
     Gtk.showall(win)
     return win
 end
 
-turnoff(fan) = 
-
 function build_fans_gui(fans)
     win = Window("Fans") |> (g = Grid())
     off = button("OFF")
-    on(off) do _
-        for fan in fans
-            write(fan.sp, UInt8(0))
-        end
-    end
     g[1,1:3] = off
     for (i, txt) in enumerate(("Fan", "Duty", "RPM"))
         g[2, i] = label(txt)
     end
-    for (i, fan) in enumerate(fans), (j, w) in enumerate(windwidget(fan))
+    for (i, fan) in enumerate(fans), (j, w) in enumerate(windwidget(fan, off))
         g[i + 2, j] = w
     end
     Gtk.showall(win)
