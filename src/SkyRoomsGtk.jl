@@ -68,19 +68,19 @@ function _identify_arduino(port)
     sp = open(port, baudrate)
     sleep(0.5)
     write(sp, id_msg)
-    sleep(0.5)
-    id = Int(only(read(sp)))
+    bytes = read(sp)
+    id = Int(only(bytes))
     type = id < 128 ? :fans : :leds
     return (; sp, type, id)
 end
 
 function identify_arduino(port) 
-    ntries = 10
+    ntries = 5
     for i in 1:ntries
         try
             return _identify_arduino(port)
         catch ex
-            @warn "attempt #$i failed to get fan group ID, $(ntries-i) attempts left"
+            # @warn "attempt $i of $(ntries - i) failed to connect to arduino"
         end
     end
     return nothing
