@@ -112,7 +112,7 @@ function build_leds_gui(leds, cardinalities, nsuns)
         g[i + 2, j] = w
     end
     Gtk.showall(win)
-    return win
+    return win, off
 end
 
 function build_fans_gui(fans)
@@ -126,35 +126,43 @@ function build_fans_gui(fans)
         g[i + 2, j] = w
     end
     Gtk.showall(win)
-    return win
+    return win, off
 end
 
-function closeall(leds, fans)
-    for fan in fans
-        close(fan.sp)
+function closeall(leds, _, win1, off1, ::Nothing, ::Nothing, c)
+    signal_connect(win1, :destroy) do widget
+        off1[] = off1[]
+        close(leds.sp)
+        notify(c)
     end
-    close(leds.sp)
+end
+
+function closeall(leds, fans, win1, off1, win2, off2, c)
+    signal_connect(win1, :destroy) do widget
+        off1[] = off1[]
+        close(leds.sp)
+        off2[] = off2[]
+        for fan in fans
+            close(fan.sp)
+        end
+        Gtk.destroy(win2)
+        notify(c)
+    end
+    signal_connect(win2, :destroy) do widget
+        Gtk.destroy(win1)
+    end
 end
 
 function gui(nsuns::Int = 4)
     @assert nsuns ≤ 80 "cannot have more than 80 suns"
     leds, fans = get_arduinos()
     cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
-    win1 = build_leds_gui(leds, cardinalities, nsuns)
-    if !isempty(fans)
-        win2 = build_fans_gui(fans)
-    end
+    win1, off1 = build_leds_gui(leds, cardinalities, nsuns)
+    win2, off2 = isempty(fans) ? (nothing, nothing) : build_fans_gui(fans)
     c = Condition()
-    for win in (win1, win2)
-        signal_connect(win, :destroy) do widget
-            notify(c)
-        end
-    end
+    closeall(leds, fans, win1, off1, win2, off2, c)
     @async Gtk.gtk_main()
     wait(c)
-    closeall(leds, fans)
-    Gtk.destroy(win1)
-    Gtk.destroy(win2)
 end
 
 
