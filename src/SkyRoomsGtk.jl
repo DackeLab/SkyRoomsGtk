@@ -2,31 +2,14 @@ module SkyRoomsGtk
 
 using TOML
 using Gtk.ShortNames, GtkObservables, LibSerialPort
+import Humanize.digitsep
 
-export nicolas, sheldon
+export gui
 
-const nsuns = 4
 const ledsperstrip = 150
 const zenith = 71
 const baudrate = 115200
-
-good_port(port) = try
-    sp = open(port, baudrate)
-    # sleep(0.1)
-    good = true#occursin(r"arduino"i, LibSerialPort.sp_get_port_usb_manufacturer(sp))
-    close(sp)
-    return good
-catch ex
-    return false
-end
-
-function get_port()
-    ports = get_port_list()
-    i = findfirst(good_port, ports)
-    isnothing(i) && throw("No LED strip found, did you forget to plug it in?")
-    ports[i]
-end
-
+const id_msg = UInt8[255, 0, 0, 0, 0, 0, 0]
 
 function send(cardinality, elevation, radius, red::UInt8, green::UInt8, blue::UInt8, sunid, sp, cardinalities)
     start, len = start_length(cardinality, elevation, radius, cardinalities)
@@ -58,94 +41,187 @@ function sunwidget(id, sp, cardinalities)
     return title, cardinality, elevation, radius, red, green, blue
 end
 
-
-function get_window(sp, ::Missing, cardinalities)
-    win = Window("SkyRoom") |> (g = Grid())
-    for (i, txt) in enumerate(("Sun", "Cardinality", "Elevation", "radius", "Red", "Green", "Blue"))
-        g[1, i] = label(txt)
+function windwidget(fan)
+    fansid = label(string(fan.id))
+    duty = slider(0:254; value=0)
+    rpm = label("0")
+    on(duty) do duty
+        write(fan.sp, UInt8(duty))
+        speed = duty < 15 ? 0 : round(Int, 11500duty/254)
+        rpm[] = digitsep(speed)
     end
-    for i in 1:nsuns, (j, w) in enumerate(sunwidget(i, sp, cardinalities))
-        g[i + 1, j] = w
-    end
-    return win
+    return fansid, duty, rpm
 end
 
-function upload_setups(file, cardinalities)
-    @assert isfile(file) "file $file does not exist"
 
-    d = TOML.tryparsefile(file)
+function _identify_arduino(port)
+    sp = open(port, baudrate)
+    sleep(0.5)
+    write(sp, id_msg)
+    sleep(0.5)
+    id = Int(only(read(sp)))
+    type = id < 128 ? :fans : :leds
+    return (; sp, type, id)
+end
 
-    @assert !isa(d, TOML.ParserError) "bad TOML formatting"
-
-    @assert haskey(d, "setups") """no "setups" field"""
-
-    setups = d["setups"]
-
-    @assert !isempty(setups) "no setups"
-
-    foreach(setups) do setup
-        foreach(("label", "suns")) do key
-            @assert haskey(setup, key) "a setup is missing a $key field"
-            @assert !isempty(setup[key]) "the $key field in setup $(setup["label"]) is empty"
+function identify_arduino(port) 
+    ntries = 10
+    for i in 1:ntries
+        try
+            return _identify_arduino(port)
+        catch ex
+            @warn "attempt #$i failed to get fan group ID, $(ntries-i) attempts left"
         end
-        label = setup["label"]
-        @assert setup["label"] isa String "the label in setup $label is not a string"
-        @assert !isempty(setup["suns"]) "suns in setup $label are empty"
-        @assert length(setup["suns"]) ≤ nsuns "setup $label has more than $nsuns suns"
-        foreach(setup["suns"]) do sun
-            foreach(("cardinality", "blue", "radius", "green", "red", "elevation")) do key
-                @assert haskey(sun, key) "the $key field is missing from one of the suns in setup $label"
-            end
-            @assert sun["cardinality"] ∈ cardinalities "cardinality in setup $label must be one of these: $cardinalities"
-            @assert 0 ≤ sun["blue"] ≤ 255 "blue in setup $label must be between 0 and 255"
-            @assert 0 ≤ sun["radius"] ≤ 255 "radius in setup $label must be between 0 and 255"
-            @assert 0 ≤ sun["green"] ≤ 255 "green in setup $label must be between 0 and 255"
-            @assert 0 ≤ sun["red"] ≤ 255 "red in setup $label must be between 0 and 255"
-            @assert 1 ≤ sun["elevation"] ≤ 71 "elevation in setup $label must be between 0 and 255"
-        end
-    end 
+    end
+    return nothing
+end
 
-    return d["setups"]
+function get_arduinos()
+    arduinos = identify_arduino.(get_port_list())
+    ledsi = findfirst(x -> x.type == :leds, arduinos)
+    fansi = findall(x -> x.type == :fans, arduinos)
+    leds = arduinos[ledsi]
+    fans = arduinos[fansi]
+    return leds, fans
 end
 
 turnoff(sp, cardinalities) = foreach(1:nsuns) do i
     send("NW", 1, 0, zeros(UInt8, 3)..., i, sp, cardinalities)
 end
 
-function get_window(sp, file::String, cardinalities)
-    win = Window("SkyRoom") |> (g = Grid())
-    setups = upload_setups(file, cardinalities)
-    n = length(setups)
-    wh = ceil(Int, sqrt(n))
-    for (i, setup) in enumerate(setups)
-        b = button(setup["label"])
-        on(b) do _
-            turnoff(sp, cardinalities)
-            for (sunid, sun) in enumerate(setup["suns"])
-                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, sp, cardinalities)
-            end
-        end
-        x, y = Tuple(CartesianIndices((wh, wh))[i])
-        g[x, y] = b
+function build_leds_gui(leds, cardinalities, nsuns)
+    win = Window("LEDs") |> (g = Grid())
+    off = button("OFF")
+    on(off) do _
+        turnoff(leds.sp, cardinalities)
     end
+    g[1,1:7] = off
+    for (i, txt) in enumerate(("Sun", "Cardinality", "Elevation", "radius", "Red", "Green", "Blue"))
+        g[2, i] = label(txt)
+    end
+    for i in 1:nsuns, (j, w) in enumerate(sunwidget(i, leds.sp, cardinalities))
+        g[i + 2, j] = w
+    end
+    Gtk.showall(win)
     return win
 end
 
-function main(cardinalities; file::Union{Missing, String} = missing)
-    port = get_port()
-    sp = open(port, baudrate)
-    win = get_window(sp, file, cardinalities)
+turnoff(fan) = 
+
+function build_fans_gui(fans)
+    win = Window("Fans") |> (g = Grid())
+    off = button("OFF")
+    on(off) do _
+        for fan in fans
+            write(fan.sp, UInt8(0))
+        end
+    end
+    g[1,1:3] = off
+    for (i, txt) in enumerate(("Fan", "Duty", "RPM"))
+        g[2, i] = label(txt)
+    end
+    for (i, fan) in enumerate(fans), (j, w) in enumerate(windwidget(fan))
+        g[i + 2, j] = w
+    end
     Gtk.showall(win)
+    return win
+end
+
+function closeall(leds, fans)
+    for fan in fans
+        close(fan.sp)
+    end
+    close(leds.sp)
+end
+
+function gui(nsuns::Int = 4)
+    @assert nsuns ≤ 80 "cannot have more than 80 suns"
+    leds, fans = get_arduinos()
+    cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
+    win1 = build_leds_gui(leds, cardinalities, nsuns)
+    if !isempty(fans)
+        win2 = build_fans_gui(fans)
+    end
     c = Condition()
-    signal_connect(win, :destroy) do widget
-        close(sp)
-        notify(c)
+    for win in (win1, win2)
+        signal_connect(win, :destroy) do widget
+            notify(c)
+        end
     end
     @async Gtk.gtk_main()
     wait(c)
+    closeall(leds, fans)
+    Gtk.destroy(win1)
+    Gtk.destroy(win2)
 end
 
-sheldon(; file = missing) = main(["NE", "SW", "SE", "NW"]; file)
-nicolas(; file = missing) = main(["SE", "NW", "NE", "SW"]; file)
+
+
+
+
+
+
+
+
+# function upload_setups(file, cardinalities)
+#     @assert isfile(file) "file $file does not exist"
+#
+#     d = TOML.tryparsefile(file)
+#
+#     @assert !isa(d, TOML.ParserError) "bad TOML formatting"
+#
+#     @assert haskey(d, "setups") """no "setups" field"""
+#
+#     setups = d["setups"]
+#
+#     @assert !isempty(setups) "no setups"
+#
+#     foreach(setups) do setup
+#         foreach(("label", "suns")) do key
+#             @assert haskey(setup, key) "a setup is missing a $key field"
+#             @assert !isempty(setup[key]) "the $key field in setup $(setup["label"]) is empty"
+#         end
+#         label = setup["label"]
+#         @assert setup["label"] isa String "the label in setup $label is not a string"
+#         @assert !isempty(setup["suns"]) "suns in setup $label are empty"
+#         @assert length(setup["suns"]) ≤ nsuns "setup $label has more than $nsuns suns"
+#         foreach(setup["suns"]) do sun
+#             foreach(("cardinality", "blue", "radius", "green", "red", "elevation")) do key
+#                 @assert haskey(sun, key) "the $key field is missing from one of the suns in setup $label"
+#             end
+#             @assert sun["cardinality"] ∈ cardinalities "cardinality in setup $label must be one of these: $cardinalities"
+#             @assert 0 ≤ sun["blue"] ≤ 255 "blue in setup $label must be between 0 and 255"
+#             @assert 0 ≤ sun["radius"] ≤ 255 "radius in setup $label must be between 0 and 255"
+#             @assert 0 ≤ sun["green"] ≤ 255 "green in setup $label must be between 0 and 255"
+#             @assert 0 ≤ sun["red"] ≤ 255 "red in setup $label must be between 0 and 255"
+#             @assert 1 ≤ sun["elevation"] ≤ 71 "elevation in setup $label must be between 0 and 255"
+#         end
+#     end 
+#
+#     return d["setups"]
+# end
+#
+#
+# function get_window(sp, file::String, cardinalities)
+#     win = Window("SkyRoom") |> (g = Grid())
+#     setups = upload_setups(file, cardinalities)
+#     n = length(setups)
+#     wh = ceil(Int, sqrt(n))
+#     for (i, setup) in enumerate(setups)
+#         b = button(setup["label"])
+#         on(b) do _
+#             turnoff(sp, cardinalities)
+#             for (sunid, sun) in enumerate(setup["suns"])
+#                 send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, sp, cardinalities)
+#             end
+#         end
+#         x, y = Tuple(CartesianIndices((wh, wh))[i])
+#         g[x, y] = b
+#     end
+#     return win
+# end
+#
+# sheldon(; file = missing) = main(["NE", "SW", "SE", "NW"]; file)
+# nicolas(; file = missing) = main(["SE", "NW", "NE", "SW"]; file)
 
 end
