@@ -181,6 +181,7 @@ function from_file(file::String)
     cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
     n = length(setups)
     wh = ceil(Int, sqrt(n))
+    win = Window("SkyRoom") |> (g = Grid())
     for (i, (label, setup)) in enumerate(setups)
         b = button(label)
         on(b) do _
@@ -194,6 +195,7 @@ function from_file(file::String)
         x, y = Tuple(CartesianIndices((wh, wh))[i])
         g[x, y] = b
     end
+    Gtk.showall(win)
     return win
 end
 
