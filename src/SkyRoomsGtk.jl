@@ -107,10 +107,6 @@ function get_arduinos()
     return leds, fans
 end
 
-turnoff(sp, cardinalities) = foreach(1:nsuns) do i
-    send("NW", 1, 0, zeros(UInt8, 3)..., i, sp, cardinalities)
-end
-
 function build_leds_gui(leds, cardinalities, nsuns)
     win = Window("LEDs") |> (g = Grid())
     off = button("OFF")
@@ -194,7 +190,7 @@ function from_file(file::String)
             end
             for _ in 1:3
                 for fan in fans
-                    write(fan.sp, UInt8(setup["winds"][fan.id]))
+                    write(fan.sp, setup["winds"][fan.id])
                     sleep(0.1)
                 end
             end
@@ -229,7 +225,7 @@ function from_file(file::String)
     wait(c)
 end
 
-function upload_setups(file)
+function verify(file)
     sorted_cardinalities = ["NE", "NW", "SE", "SW"]
     @assert isfile(file) "file $file does not exist"
     d = TOML.tryparsefile(file)
@@ -237,10 +233,8 @@ function upload_setups(file)
     @assert haskey(d, "setups") """no "setups" field"""
     setups = d["setups"]
     @assert !isempty(setups) "no setups"
+    @assert length(setups) ≤ 26 "can't have more than 26 setups in one file"
     foreach(setups) do setup
-        # foreach(("label", "suns")) do key
-        #     @assert haskey(setup, key) "a setup is missing a $key field"
-        # end
         @assert haskey(setup, "label") "a setup is missing a label"
         label = setup["label"]
         @assert !isempty(label) "one of the labels is empty/missing"
@@ -278,6 +272,13 @@ function upload_setups(file)
         end
     end 
     @assert allunique([setup["label"] for setup in setups]) "all setups must have a unique label"
+    return setups
+end
+
+# to_namedtuple(dict) = (; (Symbol(k) => v for (k, v) in dict)...)
+
+function upload_setups(file)
+    setups = verify(file)
     # add null suns and winds
     nsuns = maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups)
     offsun = Dict("cardinality" => "NE", "blue" => 0, "radius" => 0, "green" => 0, "red" => 0, "elevation" => 1)
@@ -291,14 +292,12 @@ function upload_setups(file)
             end
         end
     end
+    # reshape
     return  [string(c,": ", setup["label"]) => Dict(
                                                     "key" => c,
                                                     "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
-                                                    "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
+                                                    "winds" => Dict(wind["id"] => UInt8(wind["duty"]) for wind in setup["winds"])
                                                    ) for (c, setup) in zip('a':'z', setups)]
 end
-
-# file = "/home/yakir/.julia/dev/SkyRoomsGtk/examples/example.toml"
-# setups = upload_setups(file)
 
 end
