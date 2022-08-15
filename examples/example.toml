@@ -75,39 +75,6 @@ radius = 0
 cardinality = "NE"
 
 [[setups]]
-label = "SW center"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 71
-radius = 0
-cardinality = "SW"
-
-[[setups]]
-label = "SE center"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 71
-radius = 0
-cardinality = "SE"
-
-[[setups]]
-label = "NW center"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 71
-radius = 0
-cardinality = "NW"
-
-[[setups]]
 label = "cross"
 
 [[setups.suns]]
@@ -127,8 +94,113 @@ radius = 200
 cardinality = "NW"
 
 [[setups]]
-label = "wind1"
+label = "colored cross"
+
+[[setups.suns]]
+red = 255
+green = 0
+blue = 0
+elevation = 35
+radius = 35
+cardinality = "NE"
+
+[[setups.suns]]
+red = 0
+green = 255
+blue = 0
+elevation = 35
+radius = 35
+cardinality = "NW"
+
+[[setups.suns]]
+red = 0
+green = 0
+blue = 255
+elevation = 35
+radius = 35
+cardinality = "SE"
+
+[[setups.suns]]
+red = 255
+green = 255
+blue = 255
+elevation = 35
+radius = 35
+cardinality = "SW"
+
+[[setups]]
+label = "a bit of wind"
 
 [[setups.winds]]
 id = 1
 duty = 20
+
+[[setups]]
+label = "a bit of wind wth cross"
+
+[[setups.suns]]
+red = 255
+green = 255
+blue = 255
+elevation = 71
+radius = 200
+cardinality = "NE"
+
+[[setups.suns]]
+red = 255
+green = 255
+blue = 255
+elevation = 71
+radius = 200
+cardinality = "NW"
+
+[[setups.winds]]
+id = 1
+duty = 20
+
+[[setups]]
+label = "all wind at 20%"
+
+[[setups.winds]]
+id = 1
+duty = 20
+
+[[setups.winds]]
+id = 2
+duty = 20
+
+[[setups.winds]]
+id = 3
+duty = 20
+
+[[setups.winds]]
+id = 4
+duty = 20
+
+[[setups.winds]]
+id = 5
+duty = 20
+
+[[setups]]
+label = "max wind"
+
+[[setups.winds]]
+id = 1
+duty = 100
+
+[[setups.winds]]
+id = 2
+duty = 100
+
+[[setups.winds]]
+id = 3
+duty = 100
+
+[[setups.winds]]
+id = 4
+duty = 100
+
+[[setups.winds]]
+id = 5
+duty = 100
+
