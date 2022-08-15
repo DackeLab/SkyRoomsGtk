@@ -6,6 +6,7 @@ import Humanize.digitsep
 
 export gui
 
+const max_suns = 80
 const ledsperstrip = 150
 const zenith = 71
 const baudrate = 115200
@@ -154,7 +155,7 @@ function closeall(leds, fans, win1, off1, win2, off2, c)
 end
 
 function gui(nsuns::Int = 4)
-    @assert nsuns ≤ 80 "cannot have more than 80 suns"
+    @assert nsuns ≤ max_suns "cannot have more than $max_suns suns"
     leds, fans = get_arduinos()
     cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
     win1, off1 = build_leds_gui(leds, cardinalities, nsuns)
@@ -165,27 +166,39 @@ function gui(nsuns::Int = 4)
     wait(c)
 end
 
+function from_file(file::String)
+    setups = upload_setups(file)
+    leds, fans = get_arduinos()
+    cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
+    n = length(setups)
+    wh = ceil(Int, sqrt(n))
+    for (i, setup) in enumerate(setups)
+        b = button(setup["label"])
+        on(b) do _
+            turnoff(leds, fans)
+            for (sunid, sun) in enumerate(setup["suns"])
+                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
+            end
+        end
+        x, y = Tuple(CartesianIndices((wh, wh))[i])
+        g[x, y] = b
+    end
+    return win
+end
 
 
 
 
 
 
-
-
-# function upload_setups(file, cardinalities)
+# function upload_setups(file)
+#     sorted_cardinalities = ["NE", "NW", "SE", "SW"]
 #     @assert isfile(file) "file $file does not exist"
-#
 #     d = TOML.tryparsefile(file)
-#
 #     @assert !isa(d, TOML.ParserError) "bad TOML formatting"
-#
 #     @assert haskey(d, "setups") """no "setups" field"""
-#
 #     setups = d["setups"]
-#
 #     @assert !isempty(setups) "no setups"
-#
 #     foreach(setups) do setup
 #         foreach(("label", "suns")) do key
 #             @assert haskey(setup, key) "a setup is missing a $key field"
@@ -194,12 +207,12 @@ end
 #         label = setup["label"]
 #         @assert setup["label"] isa String "the label in setup $label is not a string"
 #         @assert !isempty(setup["suns"]) "suns in setup $label are empty"
-#         @assert length(setup["suns"]) ≤ nsuns "setup $label has more than $nsuns suns"
+#         @assert length(setup["suns"]) ≤ max_suns "setup $label has more than $max_suns suns"
 #         foreach(setup["suns"]) do sun
 #             foreach(("cardinality", "blue", "radius", "green", "red", "elevation")) do key
 #                 @assert haskey(sun, key) "the $key field is missing from one of the suns in setup $label"
 #             end
-#             @assert sun["cardinality"] ∈ cardinalities "cardinality in setup $label must be one of these: $cardinalities"
+#             @assert sun["cardinality"] ∈ sorted_cardinalities "cardinality in setup $label must be one of these: $sorted_cardinalities"
 #             @assert 0 ≤ sun["blue"] ≤ 255 "blue in setup $label must be between 0 and 255"
 #             @assert 0 ≤ sun["radius"] ≤ 255 "radius in setup $label must be between 0 and 255"
 #             @assert 0 ≤ sun["green"] ≤ 255 "green in setup $label must be between 0 and 255"
@@ -207,9 +220,13 @@ end
 #             @assert 1 ≤ sun["elevation"] ≤ 71 "elevation in setup $label must be between 0 and 255"
 #         end
 #     end 
-#
 #     return d["setups"]
 # end
+# file = "/home/yakir/.julia/dev/SkyRoomsGtk/examples/example.toml"
+# upload_setups(file)
+#
+
+
 #
 #
 # function get_window(sp, file::String, cardinalities)
