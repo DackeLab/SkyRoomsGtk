@@ -4,7 +4,7 @@ using TOML
 using Gtk.ShortNames, GtkObservables, LibSerialPort
 import Humanize.digitsep
 
-export gui
+export gui, from_file
 
 const max_suns = 80
 const ledsperstrip = 150
@@ -181,12 +181,14 @@ function from_file(file::String)
     cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
     n = length(setups)
     wh = ceil(Int, sqrt(n))
-    for (i, setup) in enumerate(setups)
-        b = button(setup["label"])
+    for (i, (label, setup)) in enumerate(setups)
+        b = button(label)
         on(b) do _
-            turnoff(leds, fans)
-            for (sunid, sun) in enumerate(setup["suns"])
+            for (sunid, sun) in setup["suns"]
                 send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
+            end
+            for fan in fans
+                write(fan.sp, setup["winds"][fan.id])
             end
         end
         x, y = Tuple(CartesianIndices((wh, wh))[i])
@@ -195,69 +197,73 @@ function from_file(file::String)
     return win
 end
 
+function upload_setups(file)
+    sorted_cardinalities = ["NE", "NW", "SE", "SW"]
+    @assert isfile(file) "file $file does not exist"
+    d = TOML.tryparsefile(file)
+    @assert !isa(d, TOML.ParserError) "bad TOML formatting"
+    @assert haskey(d, "setups") """no "setups" field"""
+    setups = d["setups"]
+    @assert !isempty(setups) "no setups"
+    foreach(setups) do setup
+        # foreach(("label", "suns")) do key
+        #     @assert haskey(setup, key) "a setup is missing a $key field"
+        # end
+        @assert haskey(setup, "label") "a setup is missing a label"
+        label = setup["label"]
+        @assert !isempty(label) "one of the labels is empty/missing"
+        @assert setup["label"] isa String "the label in setup $label is not a string"
+        @assert any(key -> haskey(setup, key), ("suns", "winds")) "setup $label has neither a suns nor winds section?"
+        if haskey(setup, "suns")
+            @assert !isempty(setup["suns"]) "suns in setup $label are empty"
+            @assert length(setup["suns"]) ≤ max_suns "setup $label has more than $max_suns suns"
+            foreach(setup["suns"]) do sun
+                foreach(("cardinality", "blue", "radius", "green", "red", "elevation")) do key
+                    @assert haskey(sun, key) "the $key field is missing from one of the suns in setup $label"
+                end
+                @assert sun["cardinality"] ∈ sorted_cardinalities "cardinality in setup $label must be one of these: $sorted_cardinalities"
+                @assert 0 ≤ sun["blue"] ≤ 255 "blue in setup $label must be between 0 and 255"
+                @assert 0 ≤ sun["radius"] ≤ 255 "radius in setup $label must be between 0 and 255"
+                @assert 0 ≤ sun["green"] ≤ 255 "green in setup $label must be between 0 and 255"
+                @assert 0 ≤ sun["red"] ≤ 255 "red in setup $label must be between 0 and 255"
+                @assert 1 ≤ sun["elevation"] ≤ 71 "elevation in setup $label must be between 0 and 255"
+            end
+        else
+            setup["suns"] = Dict{String, Union{String, Int}}[]
+        end
+        if haskey(setup, "winds")
+            @assert !isempty(setup["winds"]) "winds in setup $label are empty"
+            @assert length(setup["winds"]) ≤ 5 "setup $label has more than 5 winds"
+            foreach(setup["winds"]) do wind
+                foreach(("id", "duty")) do key
+                    @assert haskey(wind, key) "the $key field is missing from one of the winds in setup $label"
+                end
+                @assert wind["id"] ∈ 1:5 "wind ID must be one of: 1, 2, 3, 4, or 5"
+                @assert 0 ≤ wind["duty"] ≤ 100 "wind duty in setup $label must be between 0 and 100"
+            end
+        else 
+            setup["winds"] = Dict{String, Int}[]
+        end
+    end 
+    @assert allunique([setup["label"] for setup in setups]) "all setups must have a unique label"
+    # add null suns and winds
+    nsuns = maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups)
+    foreach(setups) do setup
+        n = length(setup["suns"])
+        append!(setup["suns"], fill(Dict("cardinality" => "NE", "blue" => 0, "radius" => 0, "green" => 0, "red" => 0, "elevation" => 1), nsuns - n))
+        for id in 1:5
+            if id ∉ (wind["id"] for wind in setup["winds"])
+                push!(setup["winds"], Dict("id" => id, "duty" => 0))
+            end
+        end
+    end
+    return  Dict(setup["label"] => Dict(
+                             "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
+                             "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
+                            ) for setup in setups)
+end
 
-
-
-
-
-# function upload_setups(file)
-#     sorted_cardinalities = ["NE", "NW", "SE", "SW"]
-#     @assert isfile(file) "file $file does not exist"
-#     d = TOML.tryparsefile(file)
-#     @assert !isa(d, TOML.ParserError) "bad TOML formatting"
-#     @assert haskey(d, "setups") """no "setups" field"""
-#     setups = d["setups"]
-#     @assert !isempty(setups) "no setups"
-#     foreach(setups) do setup
-#         foreach(("label", "suns")) do key
-#             @assert haskey(setup, key) "a setup is missing a $key field"
-#             @assert !isempty(setup[key]) "the $key field in setup $(setup["label"]) is empty"
-#         end
-#         label = setup["label"]
-#         @assert setup["label"] isa String "the label in setup $label is not a string"
-#         @assert !isempty(setup["suns"]) "suns in setup $label are empty"
-#         @assert length(setup["suns"]) ≤ max_suns "setup $label has more than $max_suns suns"
-#         foreach(setup["suns"]) do sun
-#             foreach(("cardinality", "blue", "radius", "green", "red", "elevation")) do key
-#                 @assert haskey(sun, key) "the $key field is missing from one of the suns in setup $label"
-#             end
-#             @assert sun["cardinality"] ∈ sorted_cardinalities "cardinality in setup $label must be one of these: $sorted_cardinalities"
-#             @assert 0 ≤ sun["blue"] ≤ 255 "blue in setup $label must be between 0 and 255"
-#             @assert 0 ≤ sun["radius"] ≤ 255 "radius in setup $label must be between 0 and 255"
-#             @assert 0 ≤ sun["green"] ≤ 255 "green in setup $label must be between 0 and 255"
-#             @assert 0 ≤ sun["red"] ≤ 255 "red in setup $label must be between 0 and 255"
-#             @assert 1 ≤ sun["elevation"] ≤ 71 "elevation in setup $label must be between 0 and 255"
-#         end
-#     end 
-#     return d["setups"]
-# end
 # file = "/home/yakir/.julia/dev/SkyRoomsGtk/examples/example.toml"
-# upload_setups(file)
-#
-
-
-#
-#
-# function get_window(sp, file::String, cardinalities)
-#     win = Window("SkyRoom") |> (g = Grid())
-#     setups = upload_setups(file, cardinalities)
-#     n = length(setups)
-#     wh = ceil(Int, sqrt(n))
-#     for (i, setup) in enumerate(setups)
-#         b = button(setup["label"])
-#         on(b) do _
-#             turnoff(sp, cardinalities)
-#             for (sunid, sun) in enumerate(setup["suns"])
-#                 send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, sp, cardinalities)
-#             end
-#         end
-#         x, y = Tuple(CartesianIndices((wh, wh))[i])
-#         g[x, y] = b
-#     end
-#     return win
-# end
-#
-# sheldon(; file = missing) = main(["NE", "SW", "SE", "NW"]; file)
-# nicolas(; file = missing) = main(["SE", "NW", "NE", "SW"]; file)
+# setups = upload_setups(file)
 
 end
