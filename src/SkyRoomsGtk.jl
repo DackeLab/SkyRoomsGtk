@@ -196,7 +196,23 @@ function from_file(file::String)
         g[x, y] = b
     end
     Gtk.showall(win)
-    return win
+    c = Condition()
+    signal_connect(win, :destroy) do widget
+        setup = last(first(setups))
+            for (sunid, sun) in setup["suns"]
+                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
+            end
+            for fan in fans
+                write(fan.sp, setup["winds"][fan.id])
+            end
+        close(leds.sp)
+        for fan in fans
+            close(fan.sp)
+        end
+        notify(c)
+    end
+    @async Gtk.gtk_main()
+    wait(c)
 end
 
 function upload_setups(file)
@@ -250,19 +266,21 @@ function upload_setups(file)
     @assert allunique([setup["label"] for setup in setups]) "all setups must have a unique label"
     # add null suns and winds
     nsuns = maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups)
+    offsun = Dict("cardinality" => "NE", "blue" => 0, "radius" => 0, "green" => 0, "red" => 0, "elevation" => 1)
+    pushfirst!(setups, Dict("label" => "Off", "suns" => fill(offsun, nsuns), "winds" => [Dict("id" => id, "duty" => 0) for id in 1:5]))
     foreach(setups) do setup
         n = length(setup["suns"])
-        append!(setup["suns"], fill(Dict("cardinality" => "NE", "blue" => 0, "radius" => 0, "green" => 0, "red" => 0, "elevation" => 1), nsuns - n))
+        append!(setup["suns"], fill(offsun, nsuns - n))
         for id in 1:5
             if id ∉ (wind["id"] for wind in setup["winds"])
                 push!(setup["winds"], Dict("id" => id, "duty" => 0))
             end
         end
     end
-    return  Dict(setup["label"] => Dict(
+    return  [setup["label"] => Dict(
                              "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
                              "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
-                            ) for setup in setups)
+                            ) for setup in setups]
 end
 
 # file = "/home/yakir/.julia/dev/SkyRoomsGtk/examples/example.toml"
