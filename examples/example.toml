@@ -111,9 +111,9 @@ cardinality = "NW"
 label = "cross"
 
 [[setups.suns]]
-red = 1
-green = 1
-blue = 1
+red = 255
+green = 255
+blue = 255
 elevation = 71
 radius = 200
 cardinality = "NE"
