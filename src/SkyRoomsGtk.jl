@@ -67,11 +67,12 @@ end
 
 function _identify_arduino(port)
     sp = open(port, baudrate)
-    # sleep(0)
+    sleep(1)
     set_flow_control(sp)
-    sleep(2)
+    sleep(1)
     bytes = UInt8[]
     for _ in 1:10
+        sleep(0.1)
         write(sp, id_msg)
         append!(bytes, read(sp))
         if !isempty(bytes)
