@@ -16,7 +16,7 @@ void setup() {
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off 
   Serial.begin(115200);
   FastLED.addLeds<DOTSTAR, DATA_PIN, CLOCK_PIN, BGR>(leds, NUM_LEDS);
-  FastLED.clear();
+  FastLED.clear(true);
   FastLED.show();
   for(int i = 0; i < NUM_SUNS; i++) {
     suns[i][0] = 0;

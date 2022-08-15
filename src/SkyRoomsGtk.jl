@@ -186,11 +186,17 @@ function from_file(file::String)
     for (i, (label, setup)) in enumerate(setups)
         b = button(label)
         on(b) do _
-            for (sunid, sun) in setup["suns"]
-                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
+            for _ in 1:3
+                for (sunid, sun) in setup["suns"]
+                    send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
+                    sleep(0.1)
+                end
             end
-            for fan in fans
-                write(fan.sp, setup["winds"][fan.id])
+            for _ in 1:3
+                for fan in fans
+                    write(fan.sp, UInt8(setup["winds"][fan.id]))
+                    sleep(0.1)
+                end
             end
         end
         chars[setup["key"]] = observable(b)
@@ -265,7 +271,7 @@ function upload_setups(file)
                     @assert haskey(wind, key) "the $key field is missing from one of the winds in setup $label"
                 end
                 @assert wind["id"] ∈ 1:5 "wind ID must be one of: 1, 2, 3, 4, or 5"
-                @assert 0 ≤ wind["duty"] ≤ 100 "wind duty in setup $label must be between 0 and 100"
+                @assert 0 ≤ wind["duty"] ≤ 254 "wind duty in setup $label must be between 0 and 254"
             end
         else 
             setup["winds"] = Dict{String, Int}[]
@@ -286,10 +292,10 @@ function upload_setups(file)
         end
     end
     return  [string(c,": ", setup["label"]) => Dict(
-                                    "key" => c,
-                                    "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
-                                    "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
-                                   ) for (c, setup) in zip('a':'z', setups)]
+                                                    "key" => c,
+                                                    "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
+                                                    "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
+                                                   ) for (c, setup) in zip('a':'z', setups)]
 end
 
 # file = "/home/yakir/.julia/dev/SkyRoomsGtk/examples/example.toml"

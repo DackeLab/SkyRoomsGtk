@@ -82,7 +82,7 @@ red = 255
 green = 255
 blue = 255
 elevation = 71
-radius = 200
+radius = 60
 cardinality = "NE"
 
 [[setups.suns]]
@@ -90,7 +90,7 @@ red = 255
 green = 255
 blue = 255
 elevation = 71
-radius = 200
+radius = 60
 cardinality = "NW"
 
 [[setups]]
@@ -163,44 +163,44 @@ label = "all wind at 20%"
 
 [[setups.winds]]
 id = 1
-duty = 20
+duty = 51
 
 [[setups.winds]]
 id = 2
-duty = 20
+duty = 51
 
 [[setups.winds]]
 id = 3
-duty = 20
+duty = 51
 
 [[setups.winds]]
 id = 4
-duty = 20
+duty = 51
 
 [[setups.winds]]
 id = 5
-duty = 20
+duty = 51
 
 [[setups]]
 label = "max wind"
 
 [[setups.winds]]
 id = 1
-duty = 100
+duty = 254
 
 [[setups.winds]]
 id = 2
-duty = 100
+duty = 254
 
 [[setups.winds]]
 id = 3
-duty = 100
+duty = 254
 
 [[setups.winds]]
 id = 4
-duty = 100
+duty = 254
 
 [[setups.winds]]
 id = 5
-duty = 100
+duty = 254
 
