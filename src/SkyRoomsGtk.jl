@@ -178,7 +178,6 @@ end
 function from_file(file::String)
     setups = upload_setups(file)
     leds, fans = get_arduinos()
-    fandict = Dict(fan.id => fan.sp for fan in fans)
     cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
     n = length(setups)
     wh = ceil(Int, sqrt(n))
@@ -188,8 +187,8 @@ function from_file(file::String)
             for (sunid, sun) in setup["suns"]
                 send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
             end
-            for (fansid, duty) in setup["winds"]
-                write(fandict[fansid], duty)
+            for fan in fans
+                write(fan.sp, setup["winds"][fan.id])
             end
         end
         x, y = Tuple(CartesianIndices((wh, wh))[i])
