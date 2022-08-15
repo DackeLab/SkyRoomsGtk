@@ -29,17 +29,6 @@ radius = 0
 cardinality = "NW"
 
 [[setups]]
-label = "off"
-
-[[setups.suns]]
-red = 0
-green = 0
-blue = 0
-elevation = 1
-radius = 0
-cardinality = "NW"
-
-[[setups]]
 label = "4 corners"
 
 [[setups.suns]]
@@ -139,14 +128,6 @@ cardinality = "NW"
 
 [[setups]]
 label = "wind1"
-
-[[setups.suns]]
-red = 0
-green = 0
-blue = 0
-elevation = 1
-radius = 1
-cardinality = "NW"
 
 [[setups.winds]]
 id = 1
