@@ -66,9 +66,17 @@ end
 
 function _identify_arduino(port)
     sp = open(port, baudrate)
-    sleep(0.5)
-    write(sp, id_msg)
-    bytes = read(sp)
+    # sleep(0)
+    set_flow_control(sp)
+    sleep(2)
+    bytes = UInt8[]
+    for _ in 1:10
+        write(sp, id_msg)
+        append!(bytes, read(sp))
+        if !isempty(bytes)
+            break
+        end
+    end
     id = Int(only(bytes))
     type = id < 128 ? :fans : :leds
     return (; sp, type, id)
