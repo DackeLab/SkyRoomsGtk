@@ -182,6 +182,7 @@ function from_file(file::String)
     n = length(setups)
     wh = ceil(Int, sqrt(n))
     win = Window("SkyRoom") |> (g = Grid())
+    chars = Dict{Char, GtkObservables.Observable}()
     for (i, (label, setup)) in enumerate(setups)
         b = button(label)
         on(b) do _
@@ -192,19 +193,26 @@ function from_file(file::String)
                 write(fan.sp, setup["winds"][fan.id])
             end
         end
+        chars[setup["key"]] = observable(b)
         x, y = Tuple(CartesianIndices((wh, wh))[i])
         g[x, y] = b
+    end
+    signal_connect(win, "key-press-event") do widget, event
+        k = Char(event.keyval)
+        if haskey(chars, k)
+            notify(chars[k])
+        end
     end
     Gtk.showall(win)
     c = Condition()
     signal_connect(win, :destroy) do widget
         setup = last(first(setups))
-            for (sunid, sun) in setup["suns"]
-                send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
-            end
-            for fan in fans
-                write(fan.sp, setup["winds"][fan.id])
-            end
+        for (sunid, sun) in setup["suns"]
+            send(sun["cardinality"], sun["elevation"], sun["radius"], UInt8(sun["red"]), UInt8(sun["green"]), UInt8(sun["blue"]), sunid, leds.sp, cardinalities)
+        end
+        for fan in fans
+            write(fan.sp, setup["winds"][fan.id])
+        end
         close(leds.sp)
         for fan in fans
             close(fan.sp)
@@ -277,10 +285,11 @@ function upload_setups(file)
             end
         end
     end
-    return  [setup["label"] => Dict(
-                             "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
-                             "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
-                            ) for setup in setups]
+    return  [string(c,": ", setup["label"]) => Dict(
+                                    "key" => c,
+                                    "suns" => Dict(i => sun for (i, sun) in enumerate(setup["suns"])), 
+                                    "winds" => Dict(wind["id"] => wind["duty"] for wind in setup["winds"])
+                                   ) for (c, setup) in zip('a':'z', setups)]
 end
 
 # file = "/home/yakir/.julia/dev/SkyRoomsGtk/examples/example.toml"
