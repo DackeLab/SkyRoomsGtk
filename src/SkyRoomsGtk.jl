@@ -2,13 +2,12 @@ module SkyRoomsGtk
 
 using TOML
 using Gtk.ShortNames, GtkObservables, LibSerialPort, StaticArrays
-import Humanize.digitsep
 
 export gui, from_file
 
-const cardinalities = Ref{Vector{String}}()
-const suns_arduino = Ref{SerialPort}()
-const winds_arduinos = Ref{Dict{Int, SerialPort}}(Dict{Int, SerialPort}())
+const cardinalities = Ref{Vector{String}}() # cardinalities depend on which room we're in
+const suns_arduino = Ref{SerialPort}() # holder for the LED strips' arduino's serial port
+const winds_arduinos = Ref{Dict{Int, SerialPort}}(Dict{Int, SerialPort}()) # holder for the fan-groups' arduinos's serial ports
 
 const max_suns = 80
 const ledsperstrip = 150
