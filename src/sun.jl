@@ -16,7 +16,7 @@ function sun2msg(s::Sun)
 end
 
 function start_length(cardinality, elevation, radius)
-    i = findfirst(==(cardinality), cardinalities)
+    i = findfirst(==(cardinality), cardinalities[])
     issecondstrip = i > 2
     issecondhalf = iseven(i)
     center = ledsperstrip*issecondstrip + 2zenith*issecondhalf + (-1)^issecondhalf*elevation
@@ -30,7 +30,7 @@ send(s::Sun) = write(suns_arduino[], sun2msg(s))
 
 function sunwidget(id, off)
     title = label(string(id))
-    cardinality = dropdown(cardinalities; value=cardinalities[1])
+    cardinality = dropdown(cardinalities[]; value=cardinalities[][1])
     elevation = slider(1:zenith; value=zenith)
     radius = slider(0:10; value=0)
     red = slider(0:255; value=0)
