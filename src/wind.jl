@@ -6,7 +6,7 @@ end
 Wind(id) = Wind(id, 0)
 Wind(d::Dict) = Wind(d["id"], d["duty"])
 
-send(w::Wind) = write(winds_arduinos[][w.id], round(UInt8, 254w.duty/100))
+send(w::Wind) = haskey(winds_arduinos[], w.id) && write(winds_arduinos[][w.id], round(UInt8, 254w.duty/100))
 
 function windwidget(id, off)
     title = label(string(id))
