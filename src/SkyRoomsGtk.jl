@@ -78,7 +78,7 @@ function from_file(file::String=find_first_toml_file())
             for _ in 1:3
                 send.(setup.suns)
                 send.(setup.winds)
-                sleep(0.1)
+                # sleep(0.1)
             end
         end
         chars[setup.key] = observable(b)
@@ -98,10 +98,10 @@ function from_file(file::String=find_first_toml_file())
         for _ in 1:3
             send.(setup.suns)
             send.(setup.winds)
-            sleep(0.1)
+            # sleep(0.1)
         end
         close(suns_arduino[])
-        close.(values(winds_arduinos))
+        close.(values(winds_arduinos[]))
         notify(c)
     end
     @async Gtk.gtk_main()
