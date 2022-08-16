@@ -171,7 +171,7 @@ function gui(nsuns::Int = 4)
     wait(c)
 end
 
-function from_file(file::String)
+function from_file(file::String=first(filter(file -> last(splitext(file)) == ".toml", readdir(homedir()))))
     setups = upload_setups(file)
     leds, fans = get_arduinos()
     cardinalities = leds.id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] 
