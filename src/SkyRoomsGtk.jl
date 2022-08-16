@@ -2,24 +2,23 @@ module SkyRoomsGtk
 
 using TOML
 using Gtk.ShortNames, GtkObservables, LibSerialPort, StaticArrays
-import Humanize.digitsep
 
 export gui, from_file
 
-const cardinalities = Ref{Vector{String}}()
-const suns_arduino = Ref{SerialPort}()
-const winds_arduinos = Ref{Dict{Int, SerialPort}}(Dict{Int, SerialPort}())
+const cardinalities = Ref{Vector{String}}() # cardinalities depend on which room we're in
+const suns_arduino = Ref{SerialPort}() # holder for the LED strips' arduino's serial port
+const winds_arduinos = Ref{Dict{Int, SerialPort}}(Dict{Int, SerialPort}()) # holder for the fan-groups' arduinos's serial ports
 
-const max_suns = 80
+const max_suns = 80 # the arduino unos memory can hold about 80 suns
 const ledsperstrip = 150
-const zenith = 71
-const baudrate = 115200
+const zenith = 71 # the 71st LED in the strip is at the zenith of the arc
+const baudrate = 115200 # works
 
 include("arduino.jl")
 include("wind.jl")
 include("sun.jl")
 
-
+# when closing the sun GUI window, turn the lights off and close the serial port
 function closeall(win1, off1, ::Nothing, ::Nothing, c)
     signal_connect(win1, :destroy) do widget
         off1[] = off1[]
@@ -28,6 +27,7 @@ function closeall(win1, off1, ::Nothing, ::Nothing, c)
     end
 end
 
+# when closing the sun and wind GUI windows, turn the lights and fans off and close all the serial ports
 function closeall(win1, off1, win2, off2, c)
     signal_connect(win1, :destroy) do widget
         off1[] = off1[]
@@ -42,6 +42,11 @@ function closeall(win1, off1, win2, off2, c)
     end
 end
 
+"""
+    gui([nsuns::Int = 4])
+
+Opens a window with widgets to control the LED strip and fans. To change the default number of 4 suns, run with a different number (e.g. `gui(10)` for 10 suns).
+"""
 function gui(nsuns::Int = 4)
     @assert nsuns ≤ max_suns "cannot have more than $max_suns suns"
     populate_arduinos()
@@ -65,6 +70,11 @@ function find_first_toml_file()
     error("didn't find any toml files in $home")
 end
 
+"""
+    from_file([file::String=find_first_toml_file()])
+
+Opens a window with buttons to control the LED strip and fans. Each button uploads a setup from a setup file. To change the default setup file (defaults to the first `.toml` file found in the home directory), run with the path to another setup file (e.g. `from_file("/home/john/things/myfile.toml")`).
+"""
 function from_file(file::String=find_first_toml_file())
     populate_arduinos()
     setups = upload_setups(file)
@@ -108,6 +118,7 @@ function from_file(file::String=find_first_toml_file())
     wait(c)
 end
 
+# checks the toml file is formatted correctly
 function verify(file)
     sorted_cardinalities = ["NE", "NW", "SE", "SW"]
     @assert isfile(file) "file $file does not exist"
@@ -137,7 +148,7 @@ function verify(file)
                 @assert 0 ≤ sun["red"] ≤ 255 "red in setup $label must be between 0 and 255"
                 @assert 1 ≤ sun["elevation"] ≤ zenith "elevation in setup $label must be between 1 and $zenith"
             end
-        else
+        else # if it doesn't have any settings for a sun, add empty dictionary
             setup["suns"] = Dict{String, Union{String, Int}}[]
         end
         if haskey(setup, "winds")
@@ -150,32 +161,33 @@ function verify(file)
                 @assert wind["id"] ∈ 1:5 "wind ID must be one of: 1, 2, 3, 4, or 5"
                 @assert 0 ≤ wind["duty"] ≤ 100 "wind duty in setup $label must be between 0 and 100"
             end
-        else 
+        else # if it doesn't have any settings for wind, add empty dictionary
             setup["winds"] = Dict{String, Int}[]
         end
     end 
-    @assert allunique([setup["label"] for setup in setups]) "all setups must have a unique label"
+    @assert allunique([setup["label"] for setup in setups]) "setup labels must be unique"
     return setups
 end
 
+# upload setup file
 function upload_setups(file)
     setups = verify(file)
-    nsuns = maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups)
+    nsuns = maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups) # maximum number of suns in this specific setup file
     d = Pair[]
-    push!(d, "a: Off" => (key = 'a', suns = Sun.(1:nsuns), winds = Wind.(1:5)))
+    push!(d, "a: Off" => (key = 'a', suns = Sun.(1:nsuns), winds = Wind.(1:5))) # always add a first button that turns everything off
     for (key, setup) in zip('b':'z', setups)
         suns = [Sun(id, sun) for (id, sun) in enumerate(setup["suns"])]
-        for id in length(suns) + 1:nsuns
+        for id in length(suns) + 1:nsuns # add as many null suns as needed to go up to `nsuns` suns
             push!(suns, Sun(id))
         end
         winds = Wind.(setup["winds"])
         ids = (wind.id for wind in winds)
-        for id in 1:5
+        for id in 1:5 # add as many null winds as needed to go up to 5 winds
             if id ∉ ids
                 push!(winds, Wind(id))
             end
         end
-        push!(d, string(key, ": ",setup["label"]) => (; key, suns, winds))
+        push!(d, string(key, ": ",setup["label"]) => (; key, suns, winds)) # add the keyboard key to the label so the user will know what to press on
     end
     return d
 end
