@@ -4,6 +4,7 @@ struct Wind
 end
 
 Wind(id) = Wind(id, 0)
+Wind(d::Dict) = Wind(d["id"], d["duty"])
 
 send(w::Wind) = write(winds_arduinos[][w.id], round(UInt8, 254w.duty/100))
 

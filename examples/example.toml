@@ -163,44 +163,44 @@ label = "all wind at 20%"
 
 [[setups.winds]]
 id = 1
-duty = 51
+duty = 20
 
 [[setups.winds]]
 id = 2
-duty = 51
+duty = 20
 
 [[setups.winds]]
 id = 3
-duty = 51
+duty = 20
 
 [[setups.winds]]
 id = 4
-duty = 51
+duty = 20
 
 [[setups.winds]]
 id = 5
-duty = 51
+duty = 20
 
 [[setups]]
 label = "max wind"
 
 [[setups.winds]]
 id = 1
-duty = 254
+duty = 100
 
 [[setups.winds]]
 id = 2
-duty = 254
+duty = 100
 
 [[setups.winds]]
 id = 3
-duty = 254
+duty = 100
 
 [[setups.winds]]
 id = 4
-duty = 254
+duty = 100
 
 [[setups.winds]]
 id = 5
-duty = 254
+duty = 100
 
