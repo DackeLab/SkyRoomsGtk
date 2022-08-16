@@ -33,7 +33,7 @@ function closeall(win1, off1, win2, off2, c)
         off1[] = off1[]
         close(suns_arduino[])
         off2[] = off2[]
-        close.(values(winds_arduinos))
+        close.(values(winds_arduinos[]))
         Gtk.destroy(win2)
         notify(c)
     end
