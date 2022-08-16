@@ -1,14 +1,14 @@
 module SkyRoomsGtk
 
 using TOML
-using Gtk.ShortNames, GtkObservables, LibSerialPort
+using Gtk.ShortNames, GtkObservables, LibSerialPort, StaticArrays
 import Humanize.digitsep
 
 export gui, from_file
 
 const cardinalities = Ref{Vector{String}}()
 const suns_arduino = Ref{SerialPort}()
-const winds_arduinos = Ref{Dict{Int, SerialPort}}()
+const winds_arduinos = Ref{Dict{Int, SerialPort}}(Dict{Int, SerialPort}())
 
 const max_suns = 80
 const ledsperstrip = 150
@@ -16,8 +16,8 @@ const zenith = 71
 const baudrate = 115200
 
 include("arduino.jl")
-include("winds.jl")
-include("suns.jl")
+include("wind.jl")
+include("sun.jl")
 
 
 function closeall(win1, off1, ::Nothing, ::Nothing, c)
@@ -46,7 +46,7 @@ function gui(nsuns::Int = 4)
     @assert nsuns ≤ max_suns "cannot have more than $max_suns suns"
     populate_arduinos()
     win1, off1 = build_suns_gui(nsuns)
-    win2, off2 = isempty(winds_arduinos) ? (nothing, nothing) : build_winds_gui()
+    win2, off2 = isempty(winds_arduinos[]) ? (nothing, nothing) : build_winds_gui()
     c = Condition()
     closeall(win1, off1, win2, off2, c)
     @async Gtk.gtk_main()

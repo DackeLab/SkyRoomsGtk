@@ -28,12 +28,12 @@ function populate_arduinos()
     for port in get_port_list()
         for i in 1:ntries
             try
-                return identify_arduino(port)
+                identify_arduino(port)
+                break
             catch ex
                 # @warn "attempt $i of $(ntries - i) failed to connect to arduino"
             end
         end
-        identify_arduino(port)
     end
 end
 
