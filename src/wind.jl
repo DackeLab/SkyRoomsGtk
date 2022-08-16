@@ -16,7 +16,7 @@ function windwidget(id, off)
         send(wind)
     end
     on(off) do _
-        send(Wind(id))
+        duty[] = 0
     end
     return title, duty
 end
@@ -28,7 +28,7 @@ function build_winds_gui()
     for (i, txt) in enumerate(("Fan", "Duty", "RPM"))
         g[2, i] = label(txt)
     end
-    for i in sort(keys(winds_arduinos[])), (j, w) in enumerate(windwidget(i, off))
+    for i in sort(collect(keys(winds_arduinos[]))), (j, w) in enumerate(windwidget(i, off))
         g[i + 2, j] = w
     end
     Gtk.showall(win)

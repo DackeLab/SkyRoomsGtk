@@ -42,7 +42,9 @@ function sunwidget(id, off)
         send(sun)
     end
     on(off) do _
-        send(Sun(id))
+        red[] = 0
+        green[] = 0
+        blue[] = 0
     end
     return title, cardinality, elevation, radius, red, green, blue
 end
