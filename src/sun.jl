@@ -8,6 +8,7 @@ struct Sun
     blue::Int
 end
 Sun(id) = Sun(id, cardinalities[][1], 1, 0, 0, 0, 0)
+Sun(id, d::Dict) = Sun(id, d["cardinality"], d["elevation"], d["radius"], d["red"], d["green"], d["blue"])
 
 function sun2msg(s::Sun)
     start, length = start_length(s.cardinality, s.elevation, s.radius)
