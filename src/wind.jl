@@ -3,11 +3,13 @@ struct Wind
     duty::Int
 end
 
-Wind(id) = Wind(id, 0)
-Wind(d::Dict) = Wind(d["id"], d["duty"])
+Wind(id) = Wind(id, 0) # convenience constructor for zero wind
+Wind(d::Dict) = Wind(d["id"], d["duty"]) # convenience constructor from a dictionary
 
+# send duty to the correct serial port, checks to see if said port exists
 send(w::Wind) = haskey(winds_arduinos[], w.id) && write(winds_arduinos[][w.id], round(UInt8, 254w.duty/100))
 
+# a GUI widget to control one set of fans with ID `id`
 function windwidget(id, off)
     title = label(string(id))
     duty = slider(0:100; value=0)
@@ -21,6 +23,7 @@ function windwidget(id, off)
     return title, duty
 end
 
+# GUI window with all the fans' widgets
 function build_winds_gui()
     win = Window("Winds") |> (g = Grid())
     off = button("OFF")

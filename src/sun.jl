@@ -7,15 +7,17 @@ struct Sun
     green::Int
     blue::Int
 end
-Sun(id) = Sun(id, cardinalities[][1], 1, 0, 0, 0, 0)
-Sun(id, d::Dict) = Sun(id, d["cardinality"], d["elevation"], d["radius"], d["red"], d["green"], d["blue"])
+Sun(id) = Sun(id, cardinalities[][1], 1, 0, 0, 0, 0) # convenience constructor for zero sun 
+Sun(id, d::Dict) = Sun(id, d["cardinality"], d["elevation"], d["radius"], d["red"], d["green"], d["blue"]) # convenience constructor from a dictionary
 
+# convert a Sun to the byte instructions meant for the arduino
 function sun2msg(s::Sun)
     start, length = start_length(s.cardinality, s.elevation, s.radius)
     start1, start2 = reinterpret(UInt8, UInt16[start])
     SVector{7, UInt8}(s.id, start1, start2, length, s.red, s.green, s.blue)
 end
 
+# given a cardinality, elevation, and radius, calculate the starting LED position and length on the strips
 function start_length(cardinality, elevation, radius)
     i = findfirst(==(cardinality), cardinalities[])
     issecondstrip = i > 2
@@ -27,8 +29,10 @@ function start_length(cardinality, elevation, radius)
     return start, len
 end
 
+# send instructions to the LED serial port
 send(s::Sun) = write(suns_arduino[], sun2msg(s))
 
+# a GUI widget to control one sun with ID `id`
 function sunwidget(id, off)
     title = label(string(id))
     cardinality = dropdown(cardinalities[]; value=cardinalities[][1])
@@ -49,6 +53,7 @@ function sunwidget(id, off)
     return title, cardinality, elevation, radius, red, green, blue
 end
 
+# GUI window with all the suns' widgets
 function build_suns_gui(nsuns)
     win = Window("Suns") |> (g = Grid())
     off = button("Off")
