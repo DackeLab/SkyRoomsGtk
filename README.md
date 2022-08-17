@@ -36,3 +36,4 @@ It will pick the first `.toml` file it finds in the user's home-directory (run `
 ## Notes
 There can only be a maximum of 80 suns.
 There can only be a maximum of 26 (the number of alphabets) setups in the `.toml` file.
+A table
