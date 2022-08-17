@@ -36,6 +36,8 @@ function populate_arduinos()
             end
         end
     end
+    @assert isassigned(suns_arduino) "failed to find the LEDs arduino"
+
 end
 
 
