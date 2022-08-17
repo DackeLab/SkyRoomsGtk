@@ -34,6 +34,8 @@ This function loads a [`.toml` file](https://toml.io/en/), where all the setups 
 It will pick the first `.toml` file it finds in the user's home-directory (run `homedir()` in a Julia terminal to see where your home-directory is). To use a specific `.toml` file, call the function with the path to your file. For example, if the path to your file is `/home/john/things/myfile.toml` then call `from_file("/home/john/things/myfile.toml")` (note the quotation marks). 
 
 ## Notes
-There can only be a maximum of 80 suns.
-There can only be a maximum of 26 (the number of alphabets) setups in the `.toml` file.
-A table
+- There can only be a maximum of 80 suns.
+- There can only be a maximum of 26 (the number of alphabets) setups in the `.toml` file.
+- A table showing the relationship between the integer LED elevation (i.e. 1--71) and its real elevation in degrees (i.e. 0°--90°) can be found [here](mk_tbls/elevations.md).
+- A table showing the relationship between the fan's duty in percent (i.e. 0%--100%) and its real RPMs can be found [here](mk_tbls/rpms.md).
+
