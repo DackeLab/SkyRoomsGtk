@@ -17,6 +17,7 @@ Gtk = "1"
 GtkObservables = "1"
 Humanize = "1"
 LibSerialPort = "0.5.2"
+PaddedViews = "0.5"
 StaticArrays = "1"
 julia = "1"
 
