@@ -7,7 +7,7 @@ export gui, from_file
 
 const cardinalities = Ref{Vector{String}}() # cardinalities depend on which room we're in
 const suns_arduino = Ref{SerialPort}() # holder for the LED strips' arduino's serial port
-const winds_arduinos = Ref{Dict{Int, SerialPort}}(Dict{Int, SerialPort}()) # holder for the fan-groups' arduinos's serial ports
+const wind_arduino = Ref{SerialPort}() # holder for the fan-groups' arduinos's serial ports
 
 const max_suns = 80 # the arduino unos memory can hold about 80 suns
 const ledsperstrip = 150
@@ -33,7 +33,7 @@ function closeall(win1, off1, win2, off2, c)
         off1[] = off1[]
         close(suns_arduino[])
         off2[] = off2[]
-        close.(values(winds_arduinos[]))
+        close(wind_arduino[])
         Gtk.destroy(win2)
         notify(c)
     end
@@ -51,7 +51,7 @@ function gui(nsuns::Int = 4)
     @assert nsuns ≤ max_suns "cannot have more than $max_suns suns"
     populate_arduinos()
     win1, off1 = build_suns_gui(nsuns)
-    win2, off2 = isempty(winds_arduinos[]) ? (nothing, nothing) : build_winds_gui()
+    win2, off2 = isempty(wind_arduino[]) ? (nothing, nothing) : build_winds_gui()
     c = Condition()
     closeall(win1, off1, win2, off2, c)
     @async Gtk.gtk_main()
@@ -111,7 +111,7 @@ function from_file(file::String=find_first_toml_file())
             # sleep(0.1)
         end
         close(suns_arduino[])
-        close.(values(winds_arduinos[]))
+        close.(values(wind_arduino[]))
         notify(c)
     end
     @async Gtk.gtk_main()
