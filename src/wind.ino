@@ -1,9 +1,3 @@
-#include <TimerOne.h> // needed to create PWM at 25 kHz
-
-#define PIN_PWM 9
-uint8_t fanid = 3; // each fan-group has a unique ID number
-uint8_t duty = 0;
-
 void setup(void)
 {
   pinMode(LED_BUILTIN, OUTPUT); // initialize digital pin LED_BUILTIN as an output.
