@@ -1,85 +1,103 @@
-function is_sun(sp)
+const ROOM = Ref{String}()
+
+function safe_open(port, baudrate)
+    try
+        sp = open(port, baudrate)
+        return sp
+    catch ex
+        return nothing
+    end
+end
+
+function try_sun(port)
+    sp = safe_open(port, baudrate)
+    isnothing(sp) && return false
+    # @info "found viable port: $port"
+    sleep(2)
     msg = UInt8[255, 0, 0, 0, 0, 0, 0]
     for i in 1:5
-        write(sp, msg)
+        flush(sp)
         sleep(0.1)
+        write(sp, msg)
+        # @info "attempt #$i..."
         if bytesavailable(sp) == 1
-            b = first(read(sp))
-            if b > 128
+            id = only(read(sp))
+            # @info "arduino responded"
+            if id > 128
+                suns_arduino[] = sp # stow this serial port
+                cardinalities[] = id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] # due to differences in how the strips are wired we have some discrepancies in their cardinality. The first one is Sheldon, the second is Nicolas
+                @info "found LEDs arduino in port $port"
+                ROOM[] = id == 255 ? "Sheldon" : id == 254 ? "Nicolas" : "unknown"
                 return true
             end
-        else
-            read(sp)
         end
     end
+    close(sp)
     return false
 end
 
-function get_sun_id(sp)
-    msg = UInt8[255, 0, 0, 0, 0, 0, 0]
-    for i in 1:5
-        write(sp, msg)
-        sleep(0.1)
-        if bytesavailable(sp) == 1
-            b = first(read(sp))
-            return b
-        else
-            read(sp)
-        end
-    end
-end
-
-function is_wind(sp)
-    msg = UInt8[0,0,0,3]
+function update_wind(msg::Vector{UInt8}, sp::SerialPort)
     buff = zeros(UInt8, 4)
     for i in 1:5
         write(sp, msg)
-        sleep(0.1)
+        sleep(0.01)
         if bytesavailable(sp) == 4
             read!(sp, buff)
             if buff[1] == 1
                 return true
             end
         else
-            read(sp)
+            sp_flush(sp, SP_BUF_BOTH)
+            @warn "$i failed attempt/s"
         end
     end
     return false
 end
 
-# try to identify if a port is connected to an Arduino, and if so, which one is it
-function identify_arduino(port)
-    sp = open(port, baudrate)
-    sleep(0.1)
-    # set_flow_control(sp; rts=SP_RTS_ON, dtr=SP_DTR_ON) # necessary for macs
-    # sleep(0.1)
-    if is_sun(sp)
-        suns_arduino[] = sp # stow this serial port
-        id = get_sun_id(sp)
-        cardinalities[] = id == 255 ? ["NE", "SW", "SE", "NW"] : ["SE", "NW", "NE", "SW"] # due to differences in how the strips are wired we have some discrepancies in their cardinality. The first one is Sheldon, the second is Nicolas
-        @info "found LED arduino"
-    elseif is_wind(sp)
-        wind_arduino[] = sp # stow the fan's serial port
-        @info "found wind arduino"
-    else
-        @info "found another serial port"
+function try_wind(port)
+    sp = safe_open(port, baudrate)
+    isnothing(sp) && return false
+    # @info "found viable port: $port"
+    sleep(2)
+    msg = UInt8[0, 0, 0, 3]
+    if update_wind(msg, sp)
+        wind_arduino[] = sp # stow this serial port
+        @info "found wind arduino in port $port"
+        return true
     end
+    close(sp)
+    return false
 end
 
 function populate_arduinos()
-    ntries = 5
-    for port in get_port_list()
-        for i in 1:ntries
-            try # when opening "bad" ports (blue tooth modules etc) this will error, so  wrapped it in a try/catch thing
-                identify_arduino(port)
-                break
-            catch ex
-                # @warn "attempt $i of $(ntries - i) failed to connect to arduino"
+    ports = reverse(get_port_list())
+    tokill = 1
+    if !isassigned(suns_arduino)
+        for (i, port) in enumerate(ports)
+            if try_sun(port)
+                tokill = i
+                continue
             end
-            sleep(0.1)
+        end
+    else
+        if !isopen(suns_arduino[])
+            open(suns_arduino[])
         end
     end
-    @assert isassigned(suns_arduino) "failed to find the LEDs arduino"
+    @assert isassigned(suns_arduino) && isopen(suns_arduino[]) "failed to find the LEDs arduino"
+    # deleteat!(ports, tokill)
+    if !isassigned(wind_arduino)
+        for port in ports
+            if try_wind(port)
+                continue
+            end
+        end
+    else
+        if !isopen(wind_arduino[])
+            open(wind_arduino[])
+        end
+    end
+    if !isassigned(wind_arduino) && ROOM[] == "Nicolas"
+        @warn "we are in Nicolas, yet no wind arduino was detected"
+    end
 end
-
-

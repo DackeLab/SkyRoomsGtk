@@ -9,6 +9,7 @@ const cardinalities = Ref{Vector{String}}() # cardinalities depend on which room
 const suns_arduino = Ref{SerialPort}() # holder for the LED strips' arduino's serial port
 const wind_arduino = Ref{SerialPort}() # holder for the fan-groups' arduinos's serial ports
 
+const nfans = 5
 const max_suns = 80 # the arduino unos memory can hold about 80 suns
 const ledsperstrip = 150
 const zenith = 71 # the 71st LED in the strip is at the zenith of the arc
@@ -51,7 +52,7 @@ function gui(nsuns::Int = 4)
     @assert nsuns ≤ max_suns "cannot have more than $max_suns suns"
     populate_arduinos()
     win1, off1 = build_suns_gui(nsuns)
-    win2, off2 = isempty(wind_arduino[]) ? (nothing, nothing) : build_winds_gui()
+    win2, off2 = isassigned(wind_arduino) ? build_winds_gui() : (nothing, nothing)
     c = Condition()
     closeall(win1, off1, win2, off2, c)
     @async Gtk.gtk_main()
@@ -85,11 +86,8 @@ function from_file(file::String=find_first_toml_file())
     for (i, (label, setup)) in enumerate(setups)
         b = button(label)
         on(b) do _
-            for _ in 1:3
-                send.(setup.suns)
-                send.(setup.winds)
-                # sleep(0.1)
-            end
+            send.(setup.suns)
+            isassigned(wind_arduino) && update_wind.(setup.winds)
         end
         chars[setup.key] = observable(b)
         x, y = Tuple(CartesianIndices((wh, wh))[i])
@@ -105,13 +103,10 @@ function from_file(file::String=find_first_toml_file())
     c = Condition()
     signal_connect(win, :destroy) do widget
         setup = last(first(setups))
-        for _ in 1:3
-            send.(setup.suns)
-            send.(setup.winds)
-            # sleep(0.1)
-        end
+        send.(setup.suns)
+        isassigned(wind_arduino) && update_wind.(setup.winds)
         close(suns_arduino[])
-        close.(values(wind_arduino[]))
+        isassigned(wind_arduino) && close(wind_arduino[])
         notify(c)
     end
     @async Gtk.gtk_main()
@@ -152,6 +147,7 @@ function verify(file)
             setup["suns"] = Dict{String, Union{String, Int}}[]
         end
         if haskey(setup, "winds")
+            @assert ROOM[] == "Nicolas" "setup file contains winds settings, but we are not in Nicolas"
             @assert !isempty(setup["winds"]) "winds in setup $label are empty"
             @assert length(setup["winds"]) ≤ 5 "setup $label has more than 5 winds"
             foreach(setup["winds"]) do wind
@@ -169,6 +165,8 @@ function verify(file)
     return setups
 end
 
+Wind(i::Int) = Dict("id" => i, "relay" => false, "duty" => 0)
+
 # upload setup file
 function upload_setups(file)
     setups = verify(file)
@@ -180,11 +178,16 @@ function upload_setups(file)
         for id in length(suns) + 1:nsuns # add as many null suns as needed to go up to `nsuns` suns
             push!(suns, Sun(id))
         end
-        winds = Wind.(setup["winds"])
-        ids = (wind.id for wind in winds)
+        winds = setup["winds"]
+        for wind in winds
+            if wind["duty"] > 0
+                wind["relay"] = true
+            end
+        end
+        ids = (wind["id"] for wind in winds)
         for id in 1:5 # add as many null winds as needed to go up to 5 winds
             if id ∉ ids
-                push!(winds, Wind(id))
+                push!(winds, Dict("id" => id, "relay" => false, "duty" => 0))
             end
         end
         push!(d, string(key, ": ",setup["label"]) => (; key, suns, winds)) # add the keyboard key to the label so the user will know what to press on
