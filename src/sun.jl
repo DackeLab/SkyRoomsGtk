@@ -26,6 +26,9 @@ function start_length(cardinality, elevation, radius)
     start = max(1 + ledsperstrip*issecondstrip, center - radius) - 1
     stop = min(2zenith - 1 + ledsperstrip*issecondstrip, center + radius)
     len = stop - start
+    if issecondstrip && ROOM[] == "Nicolas"
+        start -= 1
+    end
     return start, len
 end
 
