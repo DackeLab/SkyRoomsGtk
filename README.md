@@ -47,4 +47,6 @@ The field setup includes:
 3. two LED strips (`AB` and `CD` )
 4. (at least) two 5 DCV power adapters
 
-Connect the `A` end of the `AB` LED strip to black box `A` ([see pic](docs/A.jpg)), and the `B` end to black box `B`. Connect the `C` end of the `CD` LED strip to black box `C`, and the `D` end to black box `D`. Connect one power adapter to black box `D`, and one to black box `A`. Finally, connect your computer to black Box `A` with the USB-B cable, and follow the instructions in [the How section](##How). 
+Connect the `A` end of the `AB` LED strip to black box `A` (), and the `B` end to black box `B`. Connect the `C` end of the `CD` LED strip to black box `C`, and the `D` end to black box `D`. Connect one power adapter to black box `D`, and one to black box `A`. Finally, connect your computer to black Box `A` with the USB-B cable, and follow the instructions in [the How section](##How). 
+
+![Black box A](docs/A.jpg?raw=true "Black box A")
