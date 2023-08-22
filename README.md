@@ -55,4 +55,20 @@ and the `B` end to black box `B`.
 
 ![Black box B](docs/B.jpg?raw=true "Black box B")
 
-Connect the `C` end of the `CD` LED strip to black box `C`, and the `D` end to black box `D`. Connect one power adapter to black box `D`, and one to black box `A`. Finally, connect your computer to black Box `A` with the USB-B cable, and follow the instructions in [the How section](##How). 
+Connect the `C` end of the `CD` LED strip to black box `C`
+
+![Black box C](docs/C.jpg?raw=true "Black box C")
+
+and the `D` end to black box `D`.
+
+![Black box D](docs/D.jpg?raw=true "Black box D")
+
+Connect one power adapter to black box `D`, and one to black box `A`. 
+
+![overview](docs/overview.jpg?raw=true "overview")
+
+Finally, connect your computer to black Box `A` with the USB-B cable
+
+![USB](docs/USB.jpg?raw=true "USB")
+
+and follow the instructions in [the How section](##How). 
