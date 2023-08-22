@@ -40,3 +40,11 @@ It will pick the first `.toml` file it finds in the user's home-directory (run `
 - A table showing the relationship between the fan's duty in percent (i.e. 0%-100%) and its real RPMs can be found [here](mk_tbls/rpms.md).
 - To edit your `.toml` file use a text editor (e.g. Notepad, TextEdit, Gedit, Vim, etc...), *not* a word processor (e.g. Word, Google Docs, LibreOffice, etc...).
 
+# Field setup
+The field setup includes:
+1. USB-B cable
+2. four black boxes (`A`, `B`, `C`, and `D`)
+3. two LED strips (`AB` and `CD` )
+4. (at least) two 5 DCV power adapters
+
+Connect the `A` end of the `AB` LED strip to black box `A` ([see pic](docs/A.jpg)), and the `B` end to black box `B`. Connect the `C` end of the `CD` LED strip to black box `C`, and the `D` end to black box `D`. Connect one power adapter to black box `D`, and one to black box `A`. Finally, connect your computer to black Box `A` with the USB-B cable, and follow the instructions in [the How section](##How). 
