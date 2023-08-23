@@ -43,9 +43,9 @@ It will pick the first `.toml` file it finds in the user's home-directory (run `
 # Field setup
 The field setup includes:
 1. USB-B cable
-2. four black boxes (`A`, `B`, `C`, and `D`)
-3. two LED strips (`AB` and `CD` )
-4. (at least) two 5 DCV power adapters
+2. Four black boxes (`A`, `B`, `C`, and `D`)
+3. Two LED strips (`AB` and `CD` )
+4. (at least) two 5 VDC power adapters
 
 Connect the `A` end of the `AB` LED strip to black box `A`
 
@@ -72,3 +72,11 @@ Finally, connect your computer to black Box `A` with the USB-B cable
 ![USB](docs/USB.jpg?raw=true "USB")
 
 and follow the instructions in [the How section](#how). 
+
+## Notes
+- If you intend to have many suns and/or large radii, add 2 more power adapters by plugging each additional adapter to black box `B` and `C`. This will ensure that the brightness and/or color of the suns won't change as a function of elevation.
+- The additional power socket in black boxes `A` and `D` are identical (each box has 2 power sockets). There is no need to prefer one over the other. 
+- The clamps can be used to gently clamp down on the LED strip so to avoid any strain on the connection between the strip and the electric wires. You don't have to use these unless you feel the strips are repeatedly being pulled on by some force (try to avoid that altogether).
+
+![clamp](docs/clamp.jpg?raw=true "clamp")
+
