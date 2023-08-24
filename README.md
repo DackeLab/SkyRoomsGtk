@@ -46,6 +46,8 @@ The field setup includes:
 2. Four black boxes (`A`, `B`, `C`, and `D`)
 3. Two LED strips (`AB` and `CD` )
 4. (at least) two 5 VDC power adapters
+5. A MacBook Air
+6. A power adapter for the laptop
 
 Connect the `A` end of the `AB` LED strip to black box `A`
 
@@ -72,6 +74,14 @@ Finally, connect your computer to black Box `A` with the USB-B cable
 ![USB](docs/USB.jpg?raw=true "USB")
 
 and follow the instructions in [the How section](#how). 
+
+The strips should be mounted onto the aluminum arches in the following way:
+1. The `A` end of the `AB` strip should have its 1st LED as close to the ground as possible: this 1st LED will be at elevation 0°.
+2. Once the `AB` strip is fully mounted/glued to the arch, the `B` end of the `AB` strip should have 9 "unused" LEDs. There are 150 LEDs in the `AB` strip, the 141st LED will be close to the ground at elevation 0°. As a result, the 71st LED will be at zenith, elevation 90°.
+3. The `C` end of the `CD` strip should have its 1st LED as close to the ground as possible.
+4. Once the `CD` strip is fully mounted/glued to the arch, the `D` end of the `CD` strip should have only 7 "unused" LEDs. There are only 148 LEDs in the `CD` strip.
+5. For clearer nomenclature, you should orient the arches such that the `A` end of the `AB` strip is pointing North East (NE), `B` pointing SW, `C` pointing SE, and `D` NW.
+6. It stands to reason that black box `A` should be closest to the laptop, and therefore the laptop should be NE to the center of the arena.
 
 ## Notes
 - If you intend to have many suns and/or large radii, add 2 more power adapters by plugging each additional adapter to black box `B` and `C`. This will ensure that the brightness and/or color of the suns won't change as a function of elevation.
