@@ -1,7 +1,7 @@
 name = "SkyRoomsGtk"
 uuid = "b4f94377-d82b-4c59-8521-c5b62fb81412"
 authors = ["Yakir Gagnon <12.yakir@gmail.com> and contributors"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 Gtk = "4c0ca9eb-093a-5379-98c5-f87ac0bbbf44"
