@@ -1,7 +1,7 @@
 module SkyRoomsGtk
 
 using TOML
-using Gtk.ShortNames, GtkObservables, LibSerialPort, StaticArrays
+using Gtk.ShortNames, GtkObservables, LibSerialPort, StaticArrays, Suppressor
 
 export gui, from_file
 
@@ -57,6 +57,7 @@ function gui(nsuns::Int = 4)
     closeall(win1, off1, win2, off2, c)
     @async Gtk.gtk_main()
     wait(c)
+    exit()
 end
 
 function find_first_toml_file() 
@@ -111,6 +112,7 @@ function from_file(file::String=find_first_toml_file())
     end
     @async Gtk.gtk_main()
     wait(c)
+    exit()
 end
 
 # checks the toml file is formatted correctly

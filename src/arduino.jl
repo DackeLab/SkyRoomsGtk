@@ -37,21 +37,23 @@ function try_sun(port)
 end
 
 function update_wind(msg::Vector{UInt8}, sp::SerialPort)
-    buff = zeros(UInt8, 4)
-    for i in 1:5
-        write(sp, msg)
-        sleep(0.01)
-        if bytesavailable(sp) == 4
-            read!(sp, buff)
-            if buff[1] == 1
-                return true
+    @suppress_err begin
+        buff = zeros(UInt8, 4)
+        for i in 1:5
+            write(sp, msg)
+            sleep(0.01)
+            if bytesavailable(sp) == 4
+                read!(sp, buff)
+                if buff[1] == 1
+                    return true
+                end
+            else
+                sp_flush(sp, SP_BUF_BOTH)
+                @warn "$i failed attempt/s"
             end
-        else
-            sp_flush(sp, SP_BUF_BOTH)
-            @warn "$i failed attempt/s"
         end
+        return false
     end
-    return false
 end
 
 function try_wind(port)

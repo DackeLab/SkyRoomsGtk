@@ -29,41 +29,6 @@ radius = 0
 cardinality = "NW"
 
 [[setups]]
-label = "4 corners"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 1
-radius = 0
-cardinality = "NE"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 1
-radius = 0
-cardinality = "SW"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 1
-radius = 0
-cardinality = "SE"
-
-[[setups.suns]]
-red = 255
-green = 255
-blue = 255
-elevation = 1
-radius = 0
-cardinality = "NW"
-
-[[setups]]
 label = "NE center"
 
 [[setups.suns]]
@@ -75,14 +40,14 @@ radius = 0
 cardinality = "NE"
 
 [[setups]]
-label = "cross"
+label = "white cross"
 
 [[setups.suns]]
 red = 255
 green = 255
 blue = 255
 elevation = 71
-radius = 60
+radius = 20
 cardinality = "NE"
 
 [[setups.suns]]
@@ -90,7 +55,7 @@ red = 255
 green = 255
 blue = 255
 elevation = 71
-radius = 60
+radius = 20
 cardinality = "NW"
 
 [[setups]]
@@ -100,32 +65,32 @@ label = "colored cross"
 red = 255
 green = 0
 blue = 0
-elevation = 35
-radius = 35
+elevation = 60
+radius = 10
 cardinality = "NE"
 
 [[setups.suns]]
 red = 0
 green = 255
 blue = 0
-elevation = 35
-radius = 35
+elevation = 60
+radius = 10
 cardinality = "NW"
 
 [[setups.suns]]
 red = 0
 green = 0
 blue = 255
-elevation = 35
-radius = 35
+elevation = 60
+radius = 10
 cardinality = "SE"
 
 [[setups.suns]]
 red = 255
 green = 255
 blue = 255
-elevation = 35
-radius = 35
+elevation = 60
+radius = 10
 cardinality = "SW"
 
 [[setups]]
@@ -136,14 +101,14 @@ id = 1
 duty = 20
 
 [[setups]]
-label = "a bit of wind wth cross"
+label = "a bit of white wind wth cross"
 
 [[setups.suns]]
 red = 255
 green = 255
 blue = 255
 elevation = 71
-radius = 200
+radius = 20
 cardinality = "NE"
 
 [[setups.suns]]
@@ -151,7 +116,7 @@ red = 255
 green = 255
 blue = 255
 elevation = 71
-radius = 200
+radius = 20
 cardinality = "NW"
 
 [[setups.winds]]
