@@ -37,23 +37,21 @@ function try_sun(port)
 end
 
 function update_wind(msg::Vector{UInt8}, sp::SerialPort)
-    @suppress begin
-        buff = zeros(UInt8, 4)
-        for i in 1:5
-            write(sp, msg)
-            sleep(0.01)
-            if bytesavailable(sp) == 4
-                read!(sp, buff)
-                if buff[1] == 1
-                    return true
-                end
-            else
-                sp_flush(sp, SP_BUF_BOTH)
-                @warn "$i failed attempt/s"
+    buff = zeros(UInt8, 4)
+    for i in 1:5
+        write(sp, msg)
+        sleep(0.01)
+        if bytesavailable(sp) == 4
+            read!(sp, buff)
+            if buff[1] == 1
+                return true
             end
+        else
+            sp_flush(sp, SP_BUF_BOTH)
+            @warn "$i failed attempt/s"
         end
-        return false
     end
+    return false
 end
 
 function try_wind(port)
@@ -72,34 +70,36 @@ function try_wind(port)
 end
 
 function populate_arduinos()
-    ports = reverse(get_port_list())
-    tokill = 1
-    if !isassigned(suns_arduino)
-        for (i, port) in enumerate(ports)
-            if try_sun(port)
-                tokill = i
-                continue
+    @suppress_out begin
+        ports = reverse(get_port_list())
+        tokill = 1
+        if !isassigned(suns_arduino)
+            for (i, port) in enumerate(ports)
+                if try_sun(port)
+                    tokill = i
+                    continue
+                end
+            end
+        else
+            if !isopen(suns_arduino[])
+                open(suns_arduino[])
             end
         end
-    else
-        if !isopen(suns_arduino[])
-            open(suns_arduino[])
-        end
-    end
-    @assert isassigned(suns_arduino) && isopen(suns_arduino[]) "failed to find the LEDs arduino"
-    # deleteat!(ports, tokill)
-    if !isassigned(wind_arduino)
-        for port in ports
-            if try_wind(port)
-                continue
+        @assert isassigned(suns_arduino) && isopen(suns_arduino[]) "failed to find the LEDs arduino"
+        # deleteat!(ports, tokill)
+        if !isassigned(wind_arduino)
+            for port in ports
+                if try_wind(port)
+                    continue
+                end
+            end
+        else
+            if !isopen(wind_arduino[])
+                open(wind_arduino[])
             end
         end
-    else
-        if !isopen(wind_arduino[])
-            open(wind_arduino[])
+        if !isassigned(wind_arduino) && ROOM[] == "Nicolas"
+            @warn "we are in Nicolas, yet no wind arduino was detected"
         end
-    end
-    if !isassigned(wind_arduino) && ROOM[] == "Nicolas"
-        @warn "we are in Nicolas, yet no wind arduino was detected"
     end
 end
