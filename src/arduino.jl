@@ -37,7 +37,7 @@ function try_sun(port)
 end
 
 function update_wind(msg::Vector{UInt8}, sp::SerialPort)
-    @suppress_err begin
+    @suppress begin
         buff = zeros(UInt8, 4)
         for i in 1:5
             write(sp, msg)
