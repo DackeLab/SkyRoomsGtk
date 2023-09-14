@@ -65,7 +65,7 @@ and the `D` end to black box `D`.
 
 ![Black box D](docs/D.jpg?raw=true "Black box D")
 
-Connect one power adapter to black box `A`, and one to black box `D`. 
+Connect one power adapter to each of the black boxes `A`, `B`, `C`, and `D`. 
 
 ![overview](docs/overview.jpg?raw=true "overview")
 

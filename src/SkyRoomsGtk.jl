@@ -149,7 +149,7 @@ function verify(file)
             setup["suns"] = Dict{String, Union{String, Int}}[]
         end
         if haskey(setup, "winds")
-            @assert ROOM[] == "Nicolas" "setup file contains winds settings, but we are not in Nicolas"
+            # @assert ROOM[] == "Nicolas" "setup file contains winds settings, but we are not in Nicolas"
             @assert !isempty(setup["winds"]) "winds in setup $label are empty"
             @assert length(setup["winds"]) ≤ 5 "setup $label has more than 5 winds"
             foreach(setup["winds"]) do wind
