@@ -197,4 +197,11 @@ function upload_setups(file)
     return d
 end
 
+function copy_example()
+    src = joinpath(@__DIR__, "..", "examples", "example.toml")
+    dst = joinpath(homedir(), "example.toml")
+    cp(src, dst; force=true)
+end
+
+
 end
