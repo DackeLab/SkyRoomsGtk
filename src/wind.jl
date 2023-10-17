@@ -6,7 +6,7 @@ end
 
 function update_wind(id::Int, duty::Int)
     channel = id - 1
-    msg = UInt8[0, round(Int, 2.55*duty), channel, 1]
+    msg = UInt8[0, round(Int, 2.54*duty), channel, 1]
     update_wind(msg, wind_arduino[])
 end
 

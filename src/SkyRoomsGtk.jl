@@ -23,7 +23,17 @@ include("sun.jl")
 function closeall(win1, off1, ::Nothing, ::Nothing, c)
     signal_connect(win1, :destroy) do widget
         off1[] = off1[]
-        close(suns_arduino[])
+        isassigned(suns_arduino) && isopen(suns_arduino[]) && close(suns_arduino[])
+        notify(c)
+    end
+end
+
+# only wind, no LED strip
+function closeall(::Nothing, ::Nothing, win2, off2, c)
+    signal_connect(win2, :destroy) do widget
+        off2[] = off2[]
+        close(wind_arduino[])
+        Gtk.destroy(win2)
         notify(c)
     end
 end
@@ -32,7 +42,7 @@ end
 function closeall(win1, off1, win2, off2, c)
     signal_connect(win1, :destroy) do widget
         off1[] = off1[]
-        close(suns_arduino[])
+        isassigned(suns_arduino) && isopen(suns_arduino[]) && close(suns_arduino[])
         off2[] = off2[]
         close(wind_arduino[])
         Gtk.destroy(win2)
@@ -51,7 +61,7 @@ Opens a window with widgets to control the LED strip and fans. To change the def
 function gui(nsuns::Int = 4)
     @assert nsuns ≤ max_suns "cannot have more than $max_suns suns"
     populate_arduinos()
-    win1, off1 = build_suns_gui(nsuns)
+    win1, off1 = isassigned(suns_arduino) ? build_suns_gui(nsuns) : (nothing, nothing)
     win2, off2 = isassigned(wind_arduino) ? build_winds_gui() : (nothing, nothing)
     c = Condition()
     closeall(win1, off1, win2, off2, c)
@@ -106,7 +116,7 @@ function from_file(file::String=find_first_toml_file())
         setup = last(first(setups))
         send.(setup.suns)
         isassigned(wind_arduino) && update_wind.(setup.winds)
-        close(suns_arduino[])
+        isassigned(suns_arduino) && isopen(suns_arduino[]) && close(suns_arduino[])
         isassigned(wind_arduino) && close(wind_arduino[])
         notify(c)
     end
@@ -172,7 +182,11 @@ Wind(i::Int) = Dict("id" => i, "relay" => false, "duty" => 0)
 # upload setup file
 function upload_setups(file)
     setups = verify(file)
-    nsuns = maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups) # maximum number of suns in this specific setup file
+    nsuns = if isassigned(suns_arduino)
+        maximum(setup -> haskey(setup, "suns") ? length(setup["suns"]) : 0, setups) # maximum number of suns in this specific setup file
+    else
+        0
+    end
     d = Pair[]
     push!(d, "a: Off" => (key = 'a', suns = Sun.(1:nsuns), winds = Wind.(1:5))) # always add a first button that turns everything off
     for (key, setup) in zip('b':'z', setups)

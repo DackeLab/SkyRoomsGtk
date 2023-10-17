@@ -85,7 +85,7 @@ function populate_arduinos()
                 open(suns_arduino[])
             end
         end
-        @assert isassigned(suns_arduino) && isopen(suns_arduino[]) "failed to find the LEDs arduino"
+        # @assert isassigned(suns_arduino) && isopen(suns_arduino[]) "failed to find the LEDs arduino"
         # deleteat!(ports, tokill)
         if !isassigned(wind_arduino)
             for port in ports
