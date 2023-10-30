@@ -100,29 +100,29 @@ The field setup includes:
 
 Connect the port 1 with one of the fan sets (doesn't matter which). OBS, you need to connect both the rotating terminal and the Ethernet cable.
 
-![Black box A](docs/connect.jpg?raw=true "Connect box to fans")
+![connect fans](docs/connect.jpg?raw=true "Connect box to fans")
 
 Connect the port 2 with the other fan set.
 
 Connect the laptop to the gray box using the USB-cable.
 
-![Black box C](docs/USB cable.jpg?raw=true "USB cable")
+![connect laptop](docs/USBcable.jpg?raw=true "USB cable")
 
 Connect the gray box to the electricity using the power cable.
 
-![Black box D](docs/power cable.jpg?raw=true "power cable")
+![connect power](docs/powercable.jpg?raw=true "power cable")
 
 Flip all the switches on the gray box to the middle (=Off).
 
-![overview](docs/flip to off.jpg?raw=true "flip to off")
+![flip to off](docs/fliptooff.jpg?raw=true "flip to off")
 
 Turn the power switch to on (from `0` to `|`). You'll hear the box's own cooling fan.
 
-![USB](docs/power on.jpg?raw=true "power on")
+![turn on](docs/poweron.jpg?raw=true "power on")
 
 Flip switches 1 and 2 up (to "Computer controlled").
 
-![USB](docs/flip switches on.jpg?raw=true "flip to on")
+![flip on](docs/flipswitcheson.jpg?raw=true "flip to on")
 
 and follow the instructions in [the How section](#how). 
 
