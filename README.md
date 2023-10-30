@@ -41,6 +41,7 @@ It will pick the first `.toml` file it finds in the user's home-directory (run `
 - To edit your `.toml` file use a text editor (e.g. Notepad, TextEdit, Gedit, Vim, etc...), *not* a word processor (e.g. Word, Google Docs, LibreOffice, etc...).
 
 # Field setup
+## LED
 The field setup includes:
 1. USB-B cable
 2. Four black boxes (`A`, `B`, `C`, and `D`)
@@ -90,3 +91,42 @@ The strips should be mounted onto the aluminum arches in the following way:
 
 ![clamp](docs/clamp.jpg?raw=true "clamp")
 
+## Fans
+The field setup includes:
+1. A gray plastic box
+2. A power cable
+3. Two control cables
+4. Two sets of fans (with 3 fans in each)
+
+Connect the port 1 with one of the fan sets (doesn't matter which). OBS, you need to connect both the rotating terminal and the Ethernet cable.
+
+![Black box A](docs/connect.jpg?raw=true "Connect box to fans")
+
+Connect the port 2 with the other fan set.
+
+Connect the laptop to the gray box using the USB-cable.
+
+![Black box C](docs/USB cable.jpg?raw=true "USB cable")
+
+Connect the gray box to the electricity using the power cable.
+
+![Black box D](docs/power cable.jpg?raw=true "power cable")
+
+Flip all the switches on the gray box to the middle (=Off).
+
+![overview](docs/flip to off.jpg?raw=true "flip to off")
+
+Turn the power switch to on (from `0` to `|`). You'll hear the box's own cooling fan.
+
+![USB](docs/power on.jpg?raw=true "power on")
+
+Flip switches 1 and 2 up (to "Computer controlled").
+
+![USB](docs/flip switches on.jpg?raw=true "flip to on")
+
+and follow the instructions in [the How section](#how). 
+
+These fans are powerful, please pay attention when using them:
+1. At high wind speeds, the fan-blades can cut fingers etc.
+2. At high wind speeds, the fans could topple over, leading to unexpected injuries.
+3. The current (amperage) needed to run these fans is relatively high (80 Amps), be weary of rain/floods/spillage.
